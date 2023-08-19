@@ -26,7 +26,6 @@ export class Account {
         session
       );
     } catch (error: any) {
-      // Handle or re-throw the error as needed
       throw new Error(`Failed to credit account: ${error.message}`);
     }
   }
@@ -67,7 +66,6 @@ export class Account {
     try {
       return await this.db.getAggregateBalance(this.accountId, session);
     } catch (error: any) {
-      // Handle or re-throw the error as needed
       throw new Error(`Failed to retrieve balance: ${error.message}`);
     }
   }
