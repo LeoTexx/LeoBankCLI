@@ -1,0 +1,31 @@
+{
+  "name": "bookkeping-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup-db": "docker-compose up -d",
+    "build": " ./node_modules/.bin/tsc",
+    "credit": "ts-node src/cli.ts credit",
+    "debit": "ts-node src/cli.ts debit",
+    "balance": "ts-node src/cli.ts balance",
+    "test:stress": "ts-node src/tests/stress.test.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/mongodb": "^4.0.7",
+    "@types/node": "^20.5.0",
+    "commander": "^11.0.0",
+    "decimal.js": "^10.4.3",
+    "mongodb": "^5.7.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/async": "^3.2.20"
+  }
+}
