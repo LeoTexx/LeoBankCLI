@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "setup-db": "docker-compose up -d",
     "build": " ./node_modules/.bin/tsc",
     "credit": "ts-node src/cli.ts credit",
@@ -21,11 +20,14 @@
     "@types/node": "^20.5.0",
     "commander": "^11.0.0",
     "decimal.js": "^10.4.3",
+    "dotenv": "^16.3.1",
+    "figlet": "^1.6.0",
     "mongodb": "^5.7.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "devDependencies": {
-    "@types/async": "^3.2.20"
+    "@types/async": "^3.2.20",
+    "@types/figlet": "^1.5.6"
   }
 }

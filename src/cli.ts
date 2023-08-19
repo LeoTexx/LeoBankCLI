@@ -1,31 +1,36 @@
 import { program } from "commander";
 import { Decimal } from "decimal.js";
-import { MongoClient, MongoError } from "mongodb";
+import figlet from "figlet";
+import { MongoClient, ClientSession } from "mongodb";
+import { config } from "dotenv";
 import { Account } from "./models/Account";
-import { MongoDatabase } from "./database/mongo";
+import { MongoDatabase, MongoSession } from "./database/mongo";
+import { Logger } from "./utils/logger";
 
-const client = new MongoClient("mongodb://admin:admin@localhost:27017");
+config();
 
-async function initializeDatabase() {
-  try {
-    await client.connect();
-    console.log("Connected to MongoDB successfully.");
-  } catch (error: any) {
-    console.error("Error connecting to MongoDB:", error.message);
-    process.exit(1); // exit with a non-zero code to indicate an error
-  }
+const client = new MongoClient(
+  process.env.MONGO_URL || "mongodb://localhost:27017"
+);
+const logger = new Logger();
 
-  return new MongoDatabase(client);
-}
+let session: ClientSession;
+
+program
+  .version("1.0.0")
+  .description("A CLI to perform banking transactions")
+  .option("--no-logs", "Disable logs")
+  .option("--test", "Test option");
 
 program
   .command("credit <accountId> <amount>")
   .action(async (accountId, amount) => {
     const dbInstance = await initializeDatabase();
-    console.log(`Attempting to credit account with ID ${accountId}...`);
+    const session = new MongoSession(client);
+    logger.log(`Attempting to credit account with ID ${accountId}...`);
     const account = new Account(accountId, dbInstance);
-    await account.credit(new Decimal(amount));
-    console.log(`Account ${accountId} credited with amount: ${amount}.`);
+    await account.credit(new Decimal(amount), session);
+    logger.log(`Account ${accountId} credited with amount: ${amount}.`, true);
 
     await closeDatabaseConnection();
   });
@@ -34,13 +39,15 @@ program
   .command("debit <accountId> <amount>")
   .action(async (accountId, amount) => {
     const dbInstance = await initializeDatabase();
-    console.log(`Attempting to debit account with ID ${accountId}...`);
+    const session = new MongoSession(client);
+    logger.log(`Attempting to debit account with ID ${accountId}...`);
     const account = new Account(accountId, dbInstance);
     try {
-      await account.debit(new Decimal(amount));
-      console.log(`Account ${accountId} debited with amount: ${amount}.`);
+      await account.debit(new Decimal(amount), session);
+      logger.log(`Account ${accountId} debited with amount: ${amount}.`, true);
     } catch (error: any) {
-      console.error(`Error while debiting: ${error.message}`);
+      logger.error(`Error while debiting: ${error.message}`);
+      throw error;
     }
 
     await closeDatabaseConnection();
@@ -48,22 +55,44 @@ program
 
 program.command("balance <accountId>").action(async (accountId) => {
   const dbInstance = await initializeDatabase();
-  console.log(`Fetching balance for account with ID ${accountId}...`);
+  const session = new MongoSession(client);
+  logger.log(`Fetching balance for account with ID ${accountId}...`);
   const account = new Account(accountId, dbInstance);
-  const balance = await account.getBalance();
-  console.log(`Balance for account ${accountId}: ${balance.toString()}.`);
+  const balance = await account.getBalance(session);
+  logger.log(`Balance for account ${accountId}: ${balance.toString()}.`, true);
 
   await closeDatabaseConnection();
 });
 
-async function closeDatabaseConnection() {
-  console.log("Closing the MongoDB client connection...");
-  try {
-    await client.close();
-    console.log("Connection closed successfully.");
-  } catch (error: any) {
-    console.error("Error closing the MongoDB connection:", error.message);
-  }
+program.parse(process.argv);
+
+if (!program.opts().logs) {
+  logger.setLogging(false);
 }
 
-program.parse(process.argv);
+logger.log(figlet.textSync("Leo's Bank"));
+//Helper functions
+
+async function initializeDatabase() {
+  try {
+    await client.connect();
+    session = client.startSession();
+    logger.log("Connected to MongoDB successfully.");
+  } catch (error: any) {
+    logger.error("Error connecting to MongoDB: " + error.message);
+    process.exit(1);
+  }
+
+  return new MongoDatabase(client);
+}
+
+async function closeDatabaseConnection() {
+  logger.log("Closing the MongoDB client connection...");
+  session.endSession();
+  try {
+    await client.close();
+    logger.log("Connection closed successfully.");
+  } catch (error: any) {
+    logger.error("Error closing the MongoDB connection: " + error.message);
+  }
+}

@@ -1,6 +1,6 @@
-import { Db, MongoClient, MongoClientOptions } from "mongodb";
+import { ClientSession, Db, MongoClient, MongoClientOptions } from "mongodb";
 import { Decimal } from "decimal.js";
-import { Database, TransactionAggregationResult } from "../interfaces";
+import { Database, Session, TransactionAggregationResult } from "../interfaces";
 import { TransactionOperation } from "../utils";
 
 export class MongoDatabase implements Database {
@@ -20,7 +20,6 @@ export class MongoDatabase implements Database {
         this.client = await this.connectionFactory();
         this.db = this.client.db("bookkeeping");
       } else if (this.connectionString) {
-        // Ensure connection pooling
         const options: MongoClientOptions = {
           maxPoolSize: 10,
           minPoolSize: 2,
@@ -40,36 +39,62 @@ export class MongoDatabase implements Database {
   async insert(
     accountId: string,
     amount: Decimal,
-    operation: TransactionOperation
+    operation: TransactionOperation,
+    session: Session
   ): Promise<void> {
     const db = await this.connectDB();
-    await db.collection("transactions").insertOne({
-      accountId,
-      amount: amount.toNumber(),
-      operation,
-    });
+
+    if (!session || !(session instanceof MongoSession)) {
+      throw new Error("Valid MongoSession required for database operations.");
+    }
+
+    await db.collection("transactions").insertOne(
+      {
+        accountId,
+        amount: amount.toNumber(),
+        operation,
+      },
+      { session: session.clientSession }
+    );
   }
 
-  async getAggregateBalance(accountId: string): Promise<Decimal> {
-    const transactionSums = await this.fetchTransactionSums(accountId);
+  async getAggregateBalance(
+    accountId: string,
+    session: Session
+  ): Promise<Decimal> {
+    if (!session || !(session instanceof MongoSession)) {
+      throw new Error("Valid MongoSession required for database operations.");
+    }
+
+    const transactionSums = await this.fetchTransactionSums(accountId, session);
     return this.calculateBalance(transactionSums);
   }
 
   private async fetchTransactionSums(
-    accountId: string
+    accountId: string,
+    session?: Session
   ): Promise<TransactionAggregationResult[]> {
     const db = await this.connectDB();
+    let mongoSession;
+
+    if (session instanceof MongoSession) {
+      mongoSession = session.clientSession;
+    }
+
     const result = await db
       .collection("transactions")
-      .aggregate([
-        { $match: { accountId } },
-        {
-          $group: {
-            _id: "$operation",
-            totalAmount: { $sum: "$amount" },
+      .aggregate(
+        [
+          { $match: { accountId } },
+          {
+            $group: {
+              _id: "$operation",
+              totalAmount: { $sum: "$amount" },
+            },
           },
-        },
-      ])
+        ],
+        { session: mongoSession }
+      )
       .toArray();
 
     return result as TransactionAggregationResult[];
@@ -87,5 +112,33 @@ export class MongoDatabase implements Database {
     });
 
     return credits.minus(debits);
+  }
+}
+
+export class MongoSession implements Session {
+  private session: ClientSession;
+
+  constructor(client: MongoClient) {
+    this.session = client.startSession();
+  }
+
+  start(): void {
+    this.session.startTransaction();
+  }
+
+  async commit(): Promise<void> {
+    await this.session.commitTransaction();
+  }
+
+  async abort(): Promise<void> {
+    await this.session.abortTransaction();
+  }
+
+  end(): void {
+    this.session.endSession();
+  }
+
+  public get clientSession(): ClientSession {
+    return this.session;
   }
 }

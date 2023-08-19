@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { Database } from "../interfaces";
+import { Database, Session } from "../interfaces";
 import { TransactionOperation } from "../utils";
 
 export class Account {
@@ -10,22 +10,31 @@ export class Account {
     this.accountId = accountId;
     this.db = db;
   }
-
-  async credit(amount: Decimal): Promise<void> {
-    await this.db.insert(this.accountId, amount, TransactionOperation.CREDIT);
+  async credit(amount: Decimal, session?: Session): Promise<void> {
+    await this.db.insert(
+      this.accountId,
+      amount,
+      TransactionOperation.CREDIT,
+      session
+    );
   }
 
-  async debit(amount: Decimal): Promise<void> {
-    const currentBalance = await this.getBalance();
+  async debit(amount: Decimal, session?: Session): Promise<void> {
+    const currentBalance = await this.getBalance(session);
 
     if (currentBalance.minus(amount).isNegative()) {
       throw new Error("Insufficient funds!");
     }
 
-    await this.db.insert(this.accountId, amount, TransactionOperation.DEBIT);
+    await this.db.insert(
+      this.accountId,
+      amount,
+      TransactionOperation.DEBIT,
+      session
+    );
   }
 
-  async getBalance(): Promise<Decimal> {
-    return await this.db.getAggregateBalance(this.accountId);
+  async getBalance(session?: Session): Promise<Decimal> {
+    return await this.db.getAggregateBalance(this.accountId, session);
   }
 }
