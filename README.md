@@ -28,43 +28,46 @@ Experience core functionalities tailored to your banking needs:
 
 ### Modular and Extensible Design
 
-- **Future-ready**: Our design prioritizes adaptability and scalability.
-- **Interface-Driven**: Core components, like the `MongoDatabase` class, adhere to specific interfaces, ensuring a standardized approach.
-- **Expandability**: Our structure allows for easy integration of additional databases by simply adhering to our `Database` interface.
+Our system's design is modular, allowing components to be easily plugged in or out:
+
+- **Future-ready**: Anticipating growth, we've structured our application for adaptability and scalability.
+- **Interface-Driven**: Core components, such as the `MongoDatabase` class, adhere to specific interfaces, guaranteeing consistent interaction and behavior across our system.
+- **Expandability**: With the system's expandable architecture, adding support for new databases is seamless, given adherence to our `Database` interface.
 
 ### Embracing MongoDB Transactions
 
-Our application's backbone, MongoDB transactions, ensures:
+MongoDB transactions form the backbone of our application's robustness:
 
-- **Atomicity**: All operations either fully execute or none do, preserving data consistency.
-- **Concurrency Control**: Smooth handling of multiple simultaneous requests.
-- **Isolation**: Active transactions remain concealed from other operations until completion.
+- **Atomicity**: Guaranteeing that all operations either fully complete or none at all, MongoDB transactions ensure data consistency.
+- **Concurrency Control**: Efficiently manage multiple simultaneous requests, ensuring smooth user experience.
+- **Isolation**: Until a transaction is fully completed, its actions are isolated from other operations, preventing any premature data leaks or inconsistencies.
+- **Durability**: Once a transaction is completed, its effects are made permanent, ensuring that data remains consistent even after system restarts or failures.
 
 ### Why We Use The Handlers Layer
 
-The handlers layer, exemplified by our `TransactionHandler`, ensures:
+This layer, epitomized by the `TransactionHandler`, offers several benefits:
 
-- **Decoupling Logic**: Separate business logic from user interactions, ensuring independence between them.
-- **Consistency & Reusability**: Centralized handling promotes uniform execution across the application and easy code reuse.
-- **Enhanced Maintainability**: Complex operations are isolated, making system tweaks simpler and safer.
-- **Scalability**: As the system evolves, the handlers layer can integrate additional operations like caching or logging without extensive refactoring.
-- **Flexibility**: Introducing new interfaces or changing underlying structures becomes straightforward with handlers acting as a consistent intermediary layer.
+- **Decoupling Logic**: By segregating business logic from user interactions, we've established a clean separation of concerns.
+- **Consistency & Reusability**: Centralizing certain functionalities allows for uniform execution and code reusability across the application.
+- **Enhanced Maintainability**: Encapsulating complex operations in handlers allows for easier system tweaks and updates.
+- **Scalability**: With the handler layer, introducing advanced functionalities like caching or more comprehensive logging is simplified.
+- **Flexibility**: Handlers act as a buffer, allowing underlying structures or interfaces to be modified without affecting other system parts.
 
 ### Stress Testing
 
-Verify system resilience:
+To ensure our system's resilience:
 
-- Use the [stress test utility](./src/tests/stress.test.ts) to simulate typical account operations.
-- Customize test intensity with parameters like `TIMES` and `MAX_CONCURRENT_OPERATIONS`.
+- Utilize the [stress test utility](./src/tests/stress.test.ts) to emulate a variety of account operations.
+- Tailor the test's rigor with adjustable parameters such as `TIMES` and `MAX_CONCURRENT_OPERATIONS`.
 
-To run, use `npm run test:stress`.
+To execute, input `npm run test:stress`.
 
 ## Setup and Usage
 
-Get started with Leo's Bank CLI:
+Kick-off your journey with Leo's Bank CLI:
 
-1. **Environment Configuration**: Rely on `dotenv` to set up. Ensure your `.env` file is populated, particularly the `MONGO_URL`.
-2. **MongoDB Integration**: Use the provided docker-compose configuration. Start with `npm run setup-db`.
+1. **Environment Configuration**: We use `dotenv` for environment setup. Populate your `.env` file, paying special attention to the `MONGO_URL`.
+2. **MongoDB Integration**: Rely on our pre-configured docker-compose setup. Launch with `npm run setup-db`.
 3. **Commands**:
    - **Credit**: `npm run credit <accountId> <amount>`
    - **Debit**: `npm run debit <accountId> <amount>`
@@ -72,21 +75,21 @@ Get started with Leo's Bank CLI:
 
 ## Scripts
 
-Streamline your experience with these scripts:
+Boost your CLI experience with our integrated scripts:
 
-- `setup-db`: Initializes a MongoDB instance via Docker.
-- `build`: Translates TypeScript to JavaScript.
-- `credit`: Add funds to an account.
-- `debit`: Reduce an account's balance.
-- `balance`: Check an account's current balance.
-- `test:stress`: Analyze performance under intensive operations.
+- `setup-db`: Fire up a MongoDB instance using Docker.
+- `build`: Converts TypeScript code to JavaScript.
+- `credit`: Increase an account's funds.
+- `debit`: Diminish an account's balance.
+- `balance`: Inquire about an account's existing funds.
+- `test:stress`: Evaluate the system's stability under heavy loads.
 
 ### Command Flag: --no-logs
 
-For users who prefer to run the scripts without the usual logging, we've introduced an optional flag --no-logs. This flag will suppress the default log outputs and provide a cleaner command line experience.
+For a cleaner interface, we offer an optional flag: --no-logs. This suppresses default logging, delivering an uncluttered command line experience.
 
-To utilize this, append `-- --no-logs` at the end of your script command. For example:
+Invoke this by adding `-- --no-logs` post your script command, e.g.:
 
 `npm run credit <accountId> <amount> -- --no-logs`
 
-This will run the credit command without displaying the typical logs.
+Doing so will execute the credit command minus the standard logs.
